@@ -14,12 +14,12 @@ static irqreturn_t gpio_irq_handler(int irq, void *dev_id)
 static int __init interrupt_init(void)
 {
     printk("Module init");
-    if (gpio_request(gpio1, "sysfs")) {
+    if (gpio_request(gpio1, "sysfs") < 0) {
         pr_err("Cannot allocate GPIO 60");
         return -1;
     }
 
-    if (gpio_direction_input(gpio1)) {
+    if (gpio_direction_input(gpio1) < 0) {
         pr_err("Cannot set GPIO 60 to input");
         gpio_free(gpio1);
         return -1;
@@ -32,7 +32,7 @@ static int __init interrupt_init(void)
         gpio_free(gpio1);
         return -1;
     }
-    printk("GPIO 17 is mapped to IRQ Nr.: %d\n", irq_number);
+    printk("GPIO 60 is mapped to IRQ Nr.: %d\n", irq_number);
     return 0;
 }
 
