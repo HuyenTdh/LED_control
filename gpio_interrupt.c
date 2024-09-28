@@ -25,6 +25,7 @@ static int __init interrupt_init(void)
         return -1;
     }
 
+    gpio_export(gpio1, false); 
     irq_number = gpio_to_irq(gpio1);
 
     if (request_irq(irq_number, gpio_irq_handler, IRQF_TRIGGER_FALLING, "my_gpio_irq", NULL) != 0) {
