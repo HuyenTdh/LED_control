@@ -13,19 +13,25 @@ static irqreturn_t gpio_irq_handler(int irq, void *dev_id)
 
 static int __init interrupt_init(void)
 {
+    int ret;
+
     printk("Module init");
-    if (gpio_request(gpio1, "sysfs") < 0) {
+    ret = gpio_request(gpio1, "sysfs");
+    printk("GPIO request: %d", ret);
+    if (ret < 0) {
         pr_err("Cannot allocate GPIO 60");
         return -1;
     }
-
-    if (gpio_direction_input(gpio1) < 0) {
+    ret = gpio_direction_input(gpio1);
+    printk("GPIO dir: %d", ret);
+    if (ret < 0) {
         pr_err("Cannot set GPIO 60 to input");
         gpio_free(gpio1);
         return -1;
     }
 
-    gpio_export(gpio1, false); 
+    ret = gpio_export(gpio1, false); 
+    printk("GPIO export: %d", ret);
     irq_number = gpio_to_irq(gpio1);
 
     if (request_irq(irq_number, gpio_irq_handler, IRQF_TRIGGER_FALLING, "my_gpio_irq", NULL) != 0) {
