@@ -5,9 +5,13 @@
 #include <linux/of.h>
 #include <linux/gpio/consumer.h>
 #include <linux/string.h>
+#include <linux/spinlock.h>
 
+spinlock_t gpio_lock;
 unsigned int irq_number;
 unsigned int gpio1 = 60;
+struct tasklet_struct gpio_tasklet;
+unsigned char irq_active = 0;
 
 struct gpiodev_private_data{
     char label[20];
@@ -29,8 +33,22 @@ struct of_device_id gpio_device_match[] = {
 
 static irqreturn_t gpio_irq_handler(int irq, void *dev_id)
 {
-	printk("gpio_irq: Interrupt was triggered and ISR was called!\n");
+    spin_lock(&gpio_lock);
+	irq_active = 1;
+    spin_unlock(&gpio_lock);
 	return IRQ_HANDLED;
+}
+
+void tasklet_func(unsigned long data)
+{
+    unsigned char *i = (unsigned char*)data;
+
+    spin_lock(&gpio_lock);
+    if (*i) {
+        *i = 0;
+        printk("gpio_irq: Interrupt was triggered and ISR was called!\n");
+    }
+    spin_unlock(&gpio_lock);
 }
 
 int bone_probe(struct platform_device *pdev)
@@ -78,6 +96,10 @@ int bone_probe(struct platform_device *pdev)
             dev_err(dev, "Cannot get IRQ number\r\n");
             return irq_number;
         }
+
+        spin_lock_init(&gpio_lock);
+        tasklet_init(&gpio_tasklet, tasklet_func, (unsigned long)&irq_active);
+
         if (request_irq(irq_number, gpio_irq_handler, IRQF_TRIGGER_FALLING, "my_gpio_irq", NULL) != 0) {
             pr_err("Cannot request interrupt nr.: %d\n", irq_number);
             return -1;
