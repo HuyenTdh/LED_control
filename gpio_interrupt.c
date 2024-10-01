@@ -35,6 +35,7 @@ static irqreturn_t gpio_irq_handler(int irq, void *dev_id)
 {
     spin_lock(&gpio_lock);
 	irq_active = 1;
+    tasklet_schedule(&gpio_tasklet);
     spin_unlock(&gpio_lock);
 	return IRQ_HANDLED;
 }
@@ -42,13 +43,16 @@ static irqreturn_t gpio_irq_handler(int irq, void *dev_id)
 void tasklet_func(unsigned long data)
 {
     unsigned char *i = (unsigned char*)data;
+    unsigned char tmp = 0;
 
     spin_lock(&gpio_lock);
     if (*i) {
         *i = 0;
-        printk("gpio_irq: Interrupt was triggered and ISR was called!\n");
+        tmp = 1;
     }
     spin_unlock(&gpio_lock);
+    if (tmp)
+        printk("gpio_irq: Interrupt was triggered and ISR was called!\n");
 }
 
 int bone_probe(struct platform_device *pdev)
