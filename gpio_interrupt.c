@@ -206,6 +206,7 @@ int bone_probe(struct platform_device *pdev)
                 dev_err(dev, "Cannot request IRQ interrupt\r\n");
                 return -1;
             }
+            dev_info(dev, "IRQ number: %d\r\n", irq_number);
         }
         else {
             ret = gpiod_direction_output(dev_data->desc, 0);
